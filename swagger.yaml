@@ -26,11 +26,11 @@ paths:
                 email:
                   type: string
                   format: email
-                  example: demo@hologic.com
+                  example: xxx@hologic.com
                 password:
                   type: string
                   format: password
-                  example: demo12345
+                  example: xxx
       responses:
         '200':
           description: Autenticación exitosa
@@ -76,7 +76,7 @@ paths:
           required: false
           schema:
             type: string
-            example: "aa:bb:cc:dd:ee:ff"
+            example: "abcdef"
         - name: name
           in: query
           description: Nombre o identificador del dispositivo
@@ -107,7 +107,7 @@ paths:
                         id:
                           type: string
                           description: ID único del dispositivo
-                          example: "aa:bb:cc:dd:ee:ff"
+                          example: "abcdef"
                         name:
                           type: string
                           description: Nombre del dispositivo
@@ -198,7 +198,7 @@ paths:
           description: ID único del dispositivo (MAC address)
           schema:
             type: string
-            example: "00:11:22:33:44:55"
+            example: "abcdef"
         - name: start
           in: query
           required: true
