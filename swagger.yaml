@@ -1,6 +1,6 @@
 openapi: 3.0.0
 info:
-  title: API de Autenticación
+  title: API ATS - Hologic CR
   version: "1.0.0"
   description: |
     Autenticación para acceder al resto de la API. El token expira cada día.
