@@ -1,0 +1,248 @@
+openapi: 3.0.0
+info:
+  title: API de Autenticación
+  version: "1.0.0"
+  description: |
+    Autenticación para acceder al resto de la API. El token expira cada día.
+
+servers:
+  - url: https://api-ats-dev.lantern.rocks/v2
+
+paths:
+  /auth/login:
+    post:
+      summary: Iniciar sesión
+      description: Retorna un token de autenticación. Requerido para cualquier otra operación.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: demo@hologic.com
+                password:
+                  type: string
+                  format: password
+                  example: demo12345
+      responses:
+        '200':
+          description: Autenticación exitosa
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    example: eyJhbGciOiJIUzI1NiIsInR5cCI6...
+        '401':
+          description: Credenciales incorrectas
+
+
+  /ufindit/device:
+    get:
+      summary: Obtener dispositivos
+      description: Obtiene una lista de dispositivos con opciones de filtrado y paginación
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          description: Número de página
+          required: false
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+        - name: size
+          in: query
+          description: Cantidad de resultados por página
+          required: false
+          schema:
+            type: integer
+            default: 500
+            minimum: 1
+            maximum: 1000
+        - name: id
+          in: query
+          description: ID único del dispositivo (MAC address)
+          required: false
+          schema:
+            type: string
+            example: "aa:bb:cc:dd:ee:ff"
+        - name: name
+          in: query
+          description: Nombre o identificador del dispositivo
+          required: false
+          schema:
+            type: string
+            example: "Sensor-001"
+        - name: sensing
+          in: query
+          description: Incluir datos de telemetrias
+          required: false
+          schema:
+            type: boolean
+            default: true
+      responses:
+        '200':
+          description: Lista de dispositivos obtenida exitosamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          description: ID único del dispositivo
+                          example: "aa:bb:cc:dd:ee:ff"
+                        name:
+                          type: string
+                          description: Nombre del dispositivo
+                          example: "Sensor-001"
+                        status:
+                          type: string
+                          description: Estado del dispositivo
+                          example: "online"
+                        sensing:
+                          type: object
+                          description: Datos de telemetría (si sensing=true)
+                          properties:
+                            temperature:
+                              type: number
+                              example: 25.5
+                            humidity:
+                              type: number
+                              example: 60.2
+                            last_update:
+                              type: string
+                              format: date-time
+                              example: "2024-01-15T10:30:00Z"
+                  pagination:
+                    type: object
+                    properties:
+                      page:
+                        type: integer
+                        example: 1
+                      size:
+                        type: integer
+                        example: 500
+                      total:
+                        type: integer
+                        example: 1250
+                      totalPages:
+                        type: integer
+                        example: 3
+        '401':
+          description: Token no válido o expirado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Token inválido"
+                  message:
+                    type: string
+                    example: "El token proporcionado no es válido o ha expirado"
+        '403':
+          description: Acceso denegado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Acceso denegado"
+                  message:
+                    type: string
+                    example: "No tienes permisos para acceder a este recurso"
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Error interno del servidor"
+                  message:
+                    type: string
+                    example: "Ocurrió un error inesperado"
+
+  /ufindit/device/data:
+    get:
+      summary: Obtener datos del dispositivo
+      description: Recupera datos de un dispositivo específico dentro de un rango de fechas
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: query
+          required: true
+          description: ID único del dispositivo (MAC address)
+          schema:
+            type: string
+            example: "00:11:22:33:44:55"
+        - name: start
+          in: query
+          required: true
+          description: Fecha y hora de inicio en formato YYYY-MM-DD HH:MM:SS
+          schema:
+            type: string
+            format: date-time
+            example: "2024-01-01 00:00:00"
+        - name: end
+          in: query
+          required: true
+          description: Fecha y hora de fin en formato YYYY-MM-DD HH:MM:SS
+          schema:
+            type: string
+            format: date-time
+            example: "2024-01-02 23:59:59"
+      responses:
+        '200':
+          description: Datos del dispositivo obtenidos exitosamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      type: object
+        '400':
+          description: Parámetros de consulta inválidos
+        '401':
+          description: Token de autorización inválido o faltante
+        '404':
+          description: Dispositivo no encontrado
+        '500':
+          description: Error interno del servidor
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Token JWT obtenido del endpoint de login
